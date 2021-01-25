@@ -6,100 +6,104 @@
 
 #define STUDENT_COUNT 10
 
-enum TYPES { BIN, CHR, UTF };
+enum TYPES
+{
+	BIN,
+	CHR,
+	UTF
+};
 
-#pragma warning(disable:4996) // for visual studio warning
-
+#pragma warning(disable : 4996) /// for visual studio warning
 
 // POD for Json file
 typedef struct Info
 {
-	char* dataFileName;
-	char* indexFileName;
+	char *dataFileName;
+	char *indexFileName;
 	int recordLength;
-	char* keyEncoding;
+	char *keyEncoding;
 	int keyStart;
 	int keyEnd;
-	char* order;
-}Info;
+	char *order;
+} Info;
 
 // POD for Student
-typedef struct _Student 
+typedef struct _Student
 {
 	char ID[10];
 	char name[22];
 	char lastname[22];
 	char phone[15];
-}Student;
+} Student;
 
 // POD for Index
-typedef struct _Index 
+typedef struct _Index
 {
 	char name[22];
 	int index;
-	
-}Index;
+
+} Index;
 
 // Global Variables
 Info info;
-FILE* inFile = 0;
-char* buffer = 0;
+FILE *inFile = 0;
+char *buffer = 0;
 char name[22];
 
 // It opens the json file and reads the given settings.
 // Then it reads the whole index file in to memory and waits for the futher commands.
-char* open(const char* fileName)
+char *open(const char *fileName)
 {
 	long numbytes;
 
 	inFile = fopen(fileName, "r");
- 
-	if(!inFile)
+
+	if (!inFile)
 		return 1;
- 
+
 	fseek(inFile, 0L, SEEK_END);
 	numbytes = ftell(inFile);
-	fseek(inFile, 0L, SEEK_SET);	
-	buffer = (char*)calloc(numbytes, sizeof(char));
+	fseek(inFile, 0L, SEEK_SET);
+	buffer = (char *)calloc(numbytes, sizeof(char));
 
-	if(!buffer)
+	if (!buffer)
 		return 1;
 
 	fread(buffer, sizeof(char), numbytes, inFile);
 }
 
 // utility ordering function for ASC
-int compare_studentsASC(const void* a, const void* b)
-{ 
-	return ((Index*)a)->index > ((Index*)b)->index; 
+int compare_studentsASC(const void *a, const void *b)
+{
+	return ((Index *)a)->index > ((Index *)b)->index;
 }
 
 // utility ordering function for DESC
-int compare_studentsDESC(const void* a, const void* b)
-{ 
-	return ((Index*)a)->index < ((Index*)b)->index; 
+int compare_studentsDESC(const void *a, const void *b)
+{
+	return ((Index *)a)->index < ((Index *)b)->index;
 }
 
 // utility string function
-void generate_random_string(char* target, char* dictionary, int maxLength, int minLength)
+void generate_random_string(char *target, char *dictionary, int maxLength, int minLength)
 {
-	int length = minLength + rand() % (maxLength-minLength);
+	int length = minLength + rand() % (maxLength - minLength);
 	int dictLength = strlen(dictionary);
 
-	for(int i = 0; i < length; i++)
+	for (int i = 0; i < length; i++)
 	{
 		int dictIdx = rand() % dictLength;
 		target[i] = toupper(dictionary[dictIdx]);
 	}
-		
+
 	target[length] = '\0';
 }
 
 // generate new random data file
 void generate_random_data_file()
 {
-	FILE* fp = fopen("dataa.dat", "wb");
-	if(!fp)
+	FILE *fp = fopen("dataa.dat", "wb");
+	if (!fp)
 	{
 		printf("%s", "Could not open data file!");
 		return;
@@ -108,20 +112,20 @@ void generate_random_data_file()
 	Student student[STUDENT_COUNT];
 
 	srand(time(NULL));
-	for(int i = 0; i < STUDENT_COUNT - 1; i++)
+	for (int i = 0; i < STUDENT_COUNT - 1; i++)
 	{
-		generate_random_string(student[i].ID,"0123456789", 10, 9);
+		generate_random_string(student[i].ID, "0123456789", 10, 9);
 		generate_random_string(student[i].name, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 22, 5);
 		generate_random_string(student[i].lastname, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 22, 5);
 		generate_random_string(student[i].phone, "0123456789", 15, 10);
 	}
 
 	// to test binary search, we create an specific student has a name that AAAAAAAAA
-	generate_random_string(student[STUDENT_COUNT-1].ID, "0123456789", 10, 9);
-	generate_random_string(student[STUDENT_COUNT-1].name, "A", 10, 9);
-	generate_random_string(student[STUDENT_COUNT-1].lastname, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 10, 9);
-	generate_random_string(student[STUDENT_COUNT-1].phone, "0123456789", 10, 9);
-				
+	generate_random_string(student[STUDENT_COUNT - 1].ID, "0123456789", 10, 9);
+	generate_random_string(student[STUDENT_COUNT - 1].name, "A", 10, 9);
+	generate_random_string(student[STUDENT_COUNT - 1].lastname, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 10, 9);
+	generate_random_string(student[STUDENT_COUNT - 1].phone, "0123456789", 10, 9);
+
 	fseek(fp, 0, SEEK_SET);
 	fwrite(student, sizeof(Student), STUDENT_COUNT, fp);
 	fclose(fp);
@@ -130,26 +134,26 @@ void generate_random_data_file()
 // read data file and create index file
 void create_index()
 {
-	FILE* fp = fopen("dataa.dat", "rb");
-	if(!fp)
+	FILE *fp = fopen("dataa.dat", "rb");
+	if (!fp)
 	{
 		printf("%s", "Could not open data file!");
 		return;
 	}
 
 	int i = 0;
-    Index indexes[STUDENT_COUNT];
+	Index indexes[STUDENT_COUNT];
 	Student student;
 	fseek(fp, 0, SEEK_SET);
-    fread(&student, sizeof(Student), 1, fp);
+	fread(&student, sizeof(Student), 1, fp);
 
-    while(!feof(fp)) 
+	while (!feof(fp))
 	{
-        strcpy(indexes[i].name, student.name);
+		strcpy(indexes[i].name, student.name);
 		indexes[i].index = i;
 		i++;
-        fread(&student, sizeof(Student), 1, fp);
-    }
+		fread(&student, sizeof(Student), 1, fp);
+	}
 
 	if (strcmp(info.order, "ASC") == 0)
 		qsort(indexes, STUDENT_COUNT, sizeof(Index), compare_studentsASC);
@@ -157,8 +161,8 @@ void create_index()
 	if (strcmp(info.order, "DEC") == 0)
 		qsort(indexes, STUDENT_COUNT, sizeof(Index), compare_studentsDESC);
 
-	FILE* fp1 = fopen(info.indexFileName, "wb");
-	if(!fp1)
+	FILE *fp1 = fopen(info.indexFileName, "wb");
+	if (!fp1)
 	{
 		printf("%s", "Could not open the index file!");
 		return;
@@ -172,7 +176,7 @@ void create_index()
 }
 
 // binary searching by name
-int search(FILE* fp, const char name1[22], int firstIdx, int lastIdx)
+int search(FILE *fp, const char name1[22], int firstIdx, int lastIdx)
 {
 	Index first, last, middle;
 	int middleIdx = (firstIdx + lastIdx) / 2;
@@ -180,61 +184,60 @@ int search(FILE* fp, const char name1[22], int firstIdx, int lastIdx)
 	fseek(fp, firstIdx * (sizeof(Index)), SEEK_SET);
 	fread(&first, sizeof(Index), 1, fp);
 
-	if(strcmp(first.name, name1) == 0)
-	{ 
+	if (strcmp(first.name, name1) == 0)
+	{
 		return first.index;
 	}
 
 	fseek(fp, lastIdx * sizeof(Index), SEEK_SET);
 	fread(&last, sizeof(Index), 1, fp);
-	if(strcmp(last.name, name1) == 0)
+	if (strcmp(last.name, name1) == 0)
 	{
 		return last.index;
 	}
 
-	if(middleIdx == firstIdx || middleIdx == lastIdx) 
+	if (middleIdx == firstIdx || middleIdx == lastIdx)
 	{
 		return -1;
 	}
 
 	fseek(fp, middleIdx * sizeof(Index), SEEK_SET);
 	fread(&middle, sizeof(Index), 1, fp);
-	if(strcmp(middle.name, name1) == 0)
+	if (strcmp(middle.name, name1) == 0)
 	{
 		return middle.index;
-	} 
-	else if (strcmp(middle.name, name1) > 0) 
+	}
+	else if (strcmp(middle.name, name1) > 0)
 	{
 		return search(fp, name1, firstIdx + 1, middleIdx - 1);
-	} 
-	else 
+	}
+	else
 	{
 		return search(fp, name1, middleIdx + 1, lastIdx - 1);
 	}
 }
 
-int find_student_by_name(char name1[22]) 
+int find_student_by_name(char name1[22])
 {
-    FILE* inputFile = fopen(info.indexFileName, "rb");
+	FILE *inputFile = fopen(info.indexFileName, "rb");
 	if (!inputFile)
 	{
 		printf("%s", "Could not open the index file.");
 		return -1;
 	}
 
-    fseek(inputFile, STUDENT_COUNT * sizeof(Index), SEEK_SET);
-    int lastIdx = (ftell(inputFile) / sizeof(Index)) - 1;
-    int result = search(inputFile, name1, 0, lastIdx);
+	fseek(inputFile, STUDENT_COUNT * sizeof(Index), SEEK_SET);
+	int lastIdx = (ftell(inputFile) / sizeof(Index)) - 1;
+	int result = search(inputFile, name1, 0, lastIdx);
 
-    fclose(inputFile);
-    return result;
+	fclose(inputFile);
+	return result;
 }
 
 // print firstName by index
 void firstName(int index)
-{	
-	FILE* inputFile = fopen(info.indexFileName, "rb");
-
+{
+	FILE *inputFile = fopen(info.indexFileName, "rb");
 
 	if (!inputFile)
 	{
@@ -245,10 +248,10 @@ void firstName(int index)
 	fseek(inputFile, 0, SEEK_SET);
 	char name[22];
 
-	for(int i = 0; i < STUDENT_COUNT; i++)
-    {
+	for (int i = 0; i < STUDENT_COUNT; i++)
+	{
 		Index bufferPerson;
-		fread(&bufferPerson,sizeof(Index),1,inputFile);
+		fread(&bufferPerson, sizeof(Index), 1, inputFile);
 		if (index == bufferPerson.index)
 			strcpy(name, bufferPerson.name);
 	}
@@ -259,24 +262,23 @@ void firstName(int index)
 // print studentID by index
 void studentID(int index)
 {
-	FILE* inputFile = fopen(info.indexFileName, "rb");
+	FILE *inputFile = fopen(info.indexFileName, "rb");
 	fseek(inputFile, 0, SEEK_SET);
 	char name[22];
 
-	for(int i = 0; i < STUDENT_COUNT; i++)
-    {
+	for (int i = 0; i < STUDENT_COUNT; i++)
+	{
 		Index bufferPerson;
 		fread(&bufferPerson, sizeof(Index), 1, inputFile);
 		if (index == bufferPerson.index)
 			strcpy(name, bufferPerson.name);
-		
 	}
 	fclose(inputFile);
 
-	FILE* inputFile2 = fopen("dataa.dat","rb");
-	fseek(inputFile2, 0, SEEK_SET);    
-	for(int i = 0; i < STUDENT_COUNT; i++)
-    {
+	FILE *inputFile2 = fopen("dataa.dat", "rb");
+	fseek(inputFile2, 0, SEEK_SET);
+	for (int i = 0; i < STUDENT_COUNT; i++)
+	{
 		Student bufferPerson;
 		fread(&bufferPerson, sizeof(Student), 1, inputFile);
 		if (strcmp(name, bufferPerson.name) == 0)
@@ -292,24 +294,23 @@ void studentID(int index)
 // print lastName by index
 void lastName(int index)
 {
-	FILE* inputFile = fopen(info.indexFileName, "rb");
+	FILE *inputFile = fopen(info.indexFileName, "rb");
 	fseek(inputFile, 0, SEEK_SET);
 	char name[22];
 
-	for(int i = 0; i < STUDENT_COUNT; i++)
-    {
+	for (int i = 0; i < STUDENT_COUNT; i++)
+	{
 		Index bufferPerson;
 		fread(&bufferPerson, sizeof(Index), 1, inputFile);
 		if (index == bufferPerson.index)
 			strcpy(name, bufferPerson.name);
-		
 	}
 	fclose(inputFile);
 
-	FILE* inputFile2 = fopen("dataa.dat","rb");
-	fseek(inputFile2, 0, SEEK_SET);    
-	for(int i = 0; i < STUDENT_COUNT; i++)
-    {
+	FILE *inputFile2 = fopen("dataa.dat", "rb");
+	fseek(inputFile2, 0, SEEK_SET);
+	for (int i = 0; i < STUDENT_COUNT; i++)
+	{
 		Student bufferPerson;
 		fread(&bufferPerson, sizeof(Student), 1, inputFile);
 		if (strcmp(name, bufferPerson.name) == 0)
@@ -326,24 +327,23 @@ void lastName(int index)
 // print phone by index
 void phone(int index)
 {
-	FILE* inputFile = fopen(info.indexFileName, "rb");
+	FILE *inputFile = fopen(info.indexFileName, "rb");
 	fseek(inputFile, 0, SEEK_SET);
 	char name[22];
 
-	for(int i = 0; i < STUDENT_COUNT; i++)
-    {
+	for (int i = 0; i < STUDENT_COUNT; i++)
+	{
 		Index bufferPerson;
 		fread(&bufferPerson, sizeof(Index), 1, inputFile);
 		if (index == bufferPerson.index)
 			strcpy(name, bufferPerson.name);
-		
 	}
 	fclose(inputFile);
 
-	FILE* inputFile2 = fopen("dataa.dat","rb");
-	fseek(inputFile2, 0, SEEK_SET);    
-	for(int i = 0; i < STUDENT_COUNT; i++)
-    {
+	FILE *inputFile2 = fopen("dataa.dat", "rb");
+	fseek(inputFile2, 0, SEEK_SET);
+	for (int i = 0; i < STUDENT_COUNT; i++)
+	{
 		Student bufferPerson;
 		fread(&bufferPerson, sizeof(Student), 1, inputFile);
 		if (strcmp(name, bufferPerson.name) == 0)
@@ -361,17 +361,17 @@ void phone(int index)
 void print_data_file()
 {
 	printf("Student Number: %d\n", STUDENT_COUNT);
-	FILE* inputFile = fopen("dataa.dat", "rb");
+	FILE *inputFile = fopen("dataa.dat", "rb");
 	if (!inputFile)
 	{
 		printf("%s", "Could not open the data file.");
 		return;
 	}
 
-	fseek(inputFile, 0, SEEK_SET); 
+	fseek(inputFile, 0, SEEK_SET);
 
-	for(int i = 0; i < STUDENT_COUNT; i++)
-    {
+	for (int i = 0; i < STUDENT_COUNT; i++)
+	{
 		Student tempStudent;
 		fread(&tempStudent, sizeof(Student), 1, inputFile);
 
@@ -385,21 +385,20 @@ void print_data_file()
 void print_index_file()
 {
 	printf("Student Number: %d\n", STUDENT_COUNT);
-	FILE* inputFile = fopen(info.indexFileName, "rb");
+	FILE *inputFile = fopen(info.indexFileName, "rb");
 	if (!inputFile)
 	{
 		printf("%s", "Could not open the index file.");
 		return;
 	}
 
-	fseek(inputFile, 0, SEEK_SET); 
+	fseek(inputFile, 0, SEEK_SET);
 
-	for(int i = 0 ; i < STUDENT_COUNT; i++)
-    {
+	for (int i = 0; i < STUDENT_COUNT; i++)
+	{
 		Index tempStudent;
 		fread(&tempStudent, sizeof(Index), 1, inputFile);
 		printf("[indexfile] name is %s, index is %d \n", tempStudent.name, tempStudent.index);
-		
 	}
 
 	fclose(inputFile);
@@ -416,7 +415,7 @@ int main()
 {
 	// open and load json file
 	open("test.json");
-	char* someJsonString = buffer;
+	char *someJsonString = buffer;
 	JSONObject *json = parseJSON(someJsonString);
 	info.dataFileName = json->pairs[0].value->stringValue;
 	info.indexFileName = json->pairs[1].value->stringValue;
@@ -436,7 +435,7 @@ int main()
 	printf("%s \n", json->pairs[5].value->stringValue);
 	printf("%s \n", json->pairs[6].value->stringValue);
 	printf("\n\n\n");
-	
+
 	generate_random_data_file();
 
 	create_index();
@@ -455,7 +454,7 @@ int main()
 		printf("index was found %d", find_student_by_name("AAAAAAAAA"));
 	else
 		printf("index not found!");
-	
+
 	printf("\n\n\n");
 
 	firstName(5);
