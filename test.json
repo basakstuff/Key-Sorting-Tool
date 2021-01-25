@@ -1,0 +1,9 @@
+{
+  "dataFileName": "data.dat",
+  "indexFileName": "data.ndx",
+  "recordLength": "10",
+  "keyEncoding": "UTF",
+  "keyStart": "13",
+  "keyEnd": "20",
+  "order": "ASC"
+}
